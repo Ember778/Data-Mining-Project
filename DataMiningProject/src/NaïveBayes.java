@@ -23,52 +23,60 @@ public class NaïveBayes implements Classify {
 		mailMap = new HashMap();
 		spamMailMap = new HashMap();
 		uniqueEmailWords = new ArrayList();
+		setUniqueEmailWords();
+		setHashMaps();
 	}
 
 	@Override
 	public String classifyEmails() {
-		setUniqueEmailWords();
-		setHashMaps();
 		String s = "";
 		double chanceSpam = 1;
 		double chanceMail = 1;
 		int mailCount = 0;
 		int spamMailCount = 0;
+		double spamAccuracy = 0;
+		double mailAccuracy = 0;
 		double totalMail = mailMap.size();
 		double totalSpam = spamMailMap.size();
+		String label = "";
 		for (File file : testDirectory.listFiles()) {
 			Iterator<Entry<String, Double>> itMail = mailMap.entrySet().iterator();
 			Iterator<Entry<String, Double>> itSpam = spamMailMap.entrySet().iterator();
 			List<String> words = getWordSet(file);
+			label = (file.getName().contains("spm")) ? "Spam" : "Mail";
+			
 			while (itMail.hasNext()) {
 				Map.Entry pair = (Map.Entry) itMail.next();
 				if (words.contains(pair.getKey())) {
-					chanceMail *= (Double) pair.getValue() / totalMail;
+					chanceMail -= Math.log((Double) pair.getValue() / totalMail);
 				} else {
-					chanceMail *= (totalMail - (Double) pair.getValue()) / totalMail;
+					chanceMail -= Math.log((totalMail - (Double) pair.getValue()) / totalMail);
 				}
 			}
+			
 			while (itSpam.hasNext()) {
 				Map.Entry pair = (Map.Entry) itSpam.next();
 				if (words.contains(pair.getKey())) {
-					chanceSpam *= (Double) pair.getValue() / totalSpam;
+					chanceSpam -= Math.log((Double) pair.getValue() / totalSpam);
 				} else {
-					chanceSpam *= (totalSpam - (Double) pair.getValue()) / totalSpam;
+					chanceSpam -= Math.log((totalSpam - (Double) pair.getValue()) / totalSpam);
 				}
 			}
 
 			if (chanceSpam > chanceMail) {
+				spamAccuracy = (label.equals("Spam")) ? spamAccuracy + 1 : spamAccuracy;
 				spamMailCount++;
 			} else {
+				mailAccuracy = (label.equals("Mail")) ? mailAccuracy + 1 : mailAccuracy;
 				mailCount++;
 			}
 			chanceSpam = 1;
 			chanceMail = 1;
 		}
-		
-		
-
-		s = "Mail :" + mailCount + " Spam :" + spamMailCount;
+		int mPercent = (int) ((mailAccuracy/mailCount) *100);
+		int sPercent = (int) ((spamAccuracy/spamMailCount) * 100);
+		 
+		s = "Mail: " + mPercent + "% Accuracy\nSpam:  " + sPercent +"% Accuracy";
 		return s;
 	}
 
