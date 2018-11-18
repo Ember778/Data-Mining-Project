@@ -13,8 +13,8 @@ import java.util.StringTokenizer;
 public class NaïveBayes implements Classify {
 	private File trainDirectory;
 	private File testDirectory;
-	private Map<String, Double> mailMap;
-	private Map<String, Double> spamMailMap;
+	private Map<String, Float> mailMap;
+	private Map<String, Float> spamMailMap;
 	private List<List<String>> uniqueEmailWords;
 
 	public NaïveBayes(String trainDirectoryPath, String testDirectoryPath) {
@@ -30,18 +30,18 @@ public class NaïveBayes implements Classify {
 	@Override
 	public String classifyEmails() {
 		String s = "";
-		double chanceSpam = 1;
-		double chanceMail = 1;
+		int chanceSpam = 0;
+		int chanceMail = 0;
 		int mailCount = 0;
 		int spamMailCount = 0;
-		double spamAccuracy = 0;
-		double mailAccuracy = 0;
-		double totalMail = mailMap.size();
-		double totalSpam = spamMailMap.size();
+		float spamAccuracy = 0;
+		float mailAccuracy = 0;
+		float totalMail = trainDirectory.listFiles().length/2;
+		float totalSpam = trainDirectory.listFiles().length/2;
 		String label = "";
 		for (File file : testDirectory.listFiles()) {
-			Iterator<Entry<String, Double>> itMail = mailMap.entrySet().iterator();
-			Iterator<Entry<String, Double>> itSpam = spamMailMap.entrySet().iterator();
+			Iterator<Entry<String, Float>> itMail = mailMap.entrySet().iterator();
+			Iterator<Entry<String, Float>> itSpam = spamMailMap.entrySet().iterator();
 			List<String> words = getWordSet(file);
 			label = (file.getName().contains("spm")) ? "Spam" : "Mail";
 			
@@ -55,33 +55,35 @@ public class NaïveBayes implements Classify {
 			while (itMail.hasNext()) {
 				Map.Entry pair = (Map.Entry) itMail.next();
 				if (words.contains(pair.getKey())) {
-					chanceMail += Math.log10((Double) pair.getValue() / totalMail);
+					chanceMail += 10000*Math.log10((float) pair.getValue() / totalMail);
 				} else {
-					chanceMail += Math.log10((totalMail - (Double) pair.getValue()) / totalMail);
+					chanceMail += 10000*Math.log10((totalMail - (float) pair.getValue()) / totalMail);
 				}
 			}
 			
 			while (itSpam.hasNext()) {
 				Map.Entry pair = (Map.Entry) itSpam.next();
 				if (words.contains(pair.getKey())) {
-					chanceSpam += Math.log10((Double) pair.getValue() / totalSpam);
+					chanceSpam += 10000*Math.log10((float) pair.getValue() / totalSpam);
 				} else {
-					chanceSpam += Math.log10((totalSpam - (Double) pair.getValue()) / totalSpam);
+					chanceSpam += 10000*Math.log10((totalSpam - (float) pair.getValue()) / totalSpam);
 				}
 			}
 
-			if (chanceSpam >= chanceMail) {
+			if (chanceSpam > chanceMail) {
 				spamAccuracy = (label.equals("Spam")) ? spamAccuracy + 1 : spamAccuracy;
 			} else {
 				mailAccuracy = (label.equals("Mail")) ? mailAccuracy + 1 : mailAccuracy;
 			}
-			chanceSpam = 1;
-			chanceMail = 1;
+			chanceSpam = 0;
+			chanceMail = 0;
 		}
 		int mPercent = (int) ((mailAccuracy/mailCount) *100);
 		int sPercent = (int) ((spamAccuracy/spamMailCount) * 100);
+		int tPercent = (int) (((spamAccuracy + mailAccuracy) / (spamMailCount + mailCount)) * 100);
+		
 		 
-		s = "Mail: " + mPercent + "% Accuracy\nSpam:  " + sPercent +"% Accuracy";
+		s = "Mail: " + mPercent + "% Accuracy\nSpam:  " + sPercent +"% Accuracy"+ "\nTotal: " + tPercent + "% Accuracy" ;
 		return s;
 	}
 
@@ -100,7 +102,7 @@ public class NaïveBayes implements Classify {
 					StringTokenizer st = new StringTokenizer(line, " ");
 					while (st.hasMoreTokens()) {
 						String word = st.nextToken().toLowerCase();
-							if(!uniqueWords.contains(word)) {
+							if(!uniqueWords.contains(word) && word.length() < 5 && hasVowels(word)) {
 								uniqueWords.add(word);	
 							}
 					}
@@ -118,13 +120,18 @@ public class NaïveBayes implements Classify {
 
 		}
 	}
+	
+	private boolean hasVowels(String word) {
+		return word.contains("a") || word.contains("e") || word.contains("i") ||
+				word.contains("o") || word.contains("u");
+	}
 
 	private void setHashMaps() {
 		for(List<String> emailWords : uniqueEmailWords) {
 			if (emailWords.get(emailWords.size()-1).equals("spms")) {
 				for(String word : emailWords) {
 					if (!spamMailMap.containsKey(word)) {
-						spamMailMap.put(word, 1.0);
+						spamMailMap.put(word, (float) 1.0);
 					} else {
 						spamMailMap.put(word, spamMailMap.get(word) + 1);
 					}
@@ -133,7 +140,7 @@ public class NaïveBayes implements Classify {
 			} else {
 				for(String word : emailWords) {
 					if (!mailMap.containsKey(word)) {
-						mailMap.put(word, 1.0);
+						mailMap.put(word, (float) 1.0);
 					} else {
 						mailMap.put(word, mailMap.get(word) + 1);
 					}
