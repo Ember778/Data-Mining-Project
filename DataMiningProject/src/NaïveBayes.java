@@ -45,30 +45,35 @@ public class NaïveBayes implements Classify {
 			List<String> words = getWordSet(file);
 			label = (file.getName().contains("spm")) ? "Spam" : "Mail";
 			
+			if(label.equals("Spam")) {
+				spamMailCount++;
+			}
+			else {
+				mailCount++;	
+			}
+			
 			while (itMail.hasNext()) {
 				Map.Entry pair = (Map.Entry) itMail.next();
 				if (words.contains(pair.getKey())) {
-					chanceMail -= Math.log((Double) pair.getValue() / totalMail);
+					chanceMail += Math.log10((Double) pair.getValue() / totalMail);
 				} else {
-					chanceMail -= Math.log((totalMail - (Double) pair.getValue()) / totalMail);
+					chanceMail += Math.log10((totalMail - (Double) pair.getValue()) / totalMail);
 				}
 			}
 			
 			while (itSpam.hasNext()) {
 				Map.Entry pair = (Map.Entry) itSpam.next();
 				if (words.contains(pair.getKey())) {
-					chanceSpam -= Math.log((Double) pair.getValue() / totalSpam);
+					chanceSpam += Math.log10((Double) pair.getValue() / totalSpam);
 				} else {
-					chanceSpam -= Math.log((totalSpam - (Double) pair.getValue()) / totalSpam);
+					chanceSpam += Math.log10((totalSpam - (Double) pair.getValue()) / totalSpam);
 				}
 			}
 
-			if (chanceSpam > chanceMail) {
+			if (chanceSpam >= chanceMail) {
 				spamAccuracy = (label.equals("Spam")) ? spamAccuracy + 1 : spamAccuracy;
-				spamMailCount++;
 			} else {
 				mailAccuracy = (label.equals("Mail")) ? mailAccuracy + 1 : mailAccuracy;
-				mailCount++;
 			}
 			chanceSpam = 1;
 			chanceMail = 1;

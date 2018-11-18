@@ -19,6 +19,7 @@ public class ClassifyEmail {
 		
 		NaïveBayes naïveBayes = new NaïveBayes(TRAINING_EMAILS_DIRECTORY, TESTING_EMAILS_DIRECTORY);
 		System.out.println(naïveBayes.classifyEmails());
-	
+		
 	}
+	
 }
