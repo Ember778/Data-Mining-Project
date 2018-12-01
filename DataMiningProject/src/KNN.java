@@ -1,6 +1,6 @@
 import java.io.File;
 
-public class KNN implements Classify {
+public class KNN implements ClassifyData {
 	private File trainDirectory;
 	private File testDirectory;
 
