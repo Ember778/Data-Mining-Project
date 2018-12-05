@@ -1,4 +1,10 @@
+/test/
+/train/
 /ClassifyData.class
-/classify.class
+/KNN.class
+/NaïveBayes.class
 /classify$ClassifyData.class
 /classify$NaïveBayes.class
+/classify.class
+/DataMiningProject/
+/classify$KNN.class
